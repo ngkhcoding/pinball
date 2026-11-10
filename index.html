@@ -1,0 +1,1038 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>3D Pinball for Windows - Space Cadet</title>
+<style>
+  * {
+    box-sizing: border-box;
+    user-select: none;
+  }
+  body {
+    margin: 0;
+    padding: 0;
+    background: #3a6ea5; /* Classic Windows XP Bliss/Classic teal-blue desktop */
+    font-family: "Tahoma", "MS Sans Serif", sans-serif;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    overflow: hidden;
+  }
+
+  /* Classic Windows 95/XP Window Chrome */
+  .win-window {
+    background: #c0c0c0;
+    border-top: 2px solid #ffffff;
+    border-left: 2px solid #ffffff;
+    border-right: 2px solid #404040;
+    border-bottom: 2px solid #404040;
+    box-shadow: 4px 4px 16px rgba(0, 0, 0, 0.5);
+    padding: 3px;
+    width: 760px;
+  }
+
+  .win-titlebar {
+    background: linear-gradient(90deg, #000080, #1084d0);
+    color: white;
+    font-weight: bold;
+    font-size: 13px;
+    padding: 4px 6px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .win-titlebar-left {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .win-icon {
+    width: 16px;
+    height: 16px;
+    background: radial-gradient(circle at 30% 30%, #ffeb3b, #ff5722);
+    border-radius: 50%;
+    border: 1px solid #fff;
+    display: inline-block;
+  }
+
+  .win-controls {
+    display: flex;
+    gap: 2px;
+  }
+
+  .win-btn {
+    width: 18px;
+    height: 16px;
+    background: #c0c0c0;
+    border-top: 1px solid #fff;
+    border-left: 1px solid #fff;
+    border-right: 1px solid #404040;
+    border-bottom: 1px solid #404040;
+    font-size: 10px;
+    font-weight: bold;
+    color: #000;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+  }
+  .win-btn:active {
+    border-top: 1px solid #404040;
+    border-left: 1px solid #404040;
+    border-right: 1px solid #fff;
+    border-bottom: 1px solid #fff;
+  }
+
+  .win-menubar {
+    display: flex;
+    gap: 14px;
+    padding: 3px 8px;
+    font-size: 12px;
+    color: #000;
+    border-bottom: 1px solid #808080;
+  }
+  .win-menu-item {
+    cursor: pointer;
+    padding: 1px 4px;
+  }
+  .win-menu-item:hover {
+    background: #000080;
+    color: #fff;
+  }
+
+  /* Main Pinball Frame */
+  .game-container {
+    display: flex;
+    background: #070913;
+    border-top: 2px solid #808080;
+    border-left: 2px solid #808080;
+    border-right: 2px solid #fff;
+    border-bottom: 2px solid #fff;
+    padding: 8px;
+    gap: 10px;
+  }
+
+  canvas {
+    background: radial-gradient(circle at 50% 35%, #19224a 0%, #090c1c 70%, #05060f 100%);
+    border: 2px inset #404040;
+    display: block;
+  }
+
+  /* Right HUD Panel */
+  .hud-panel {
+    width: 245px;
+    background: linear-gradient(180deg, #1b2442 0%, #0d1224 100%);
+    border: 2px inset #404040;
+    padding: 12px;
+    color: #fff;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+  }
+
+  .title-logo {
+    text-align: center;
+    border: 2px solid #3f51b5;
+    background: linear-gradient(135deg, #1a237e, #311b92);
+    padding: 8px;
+    border-radius: 4px;
+    box-shadow: inset 0 0 12px #00e5ff;
+  }
+  .title-logo h1 {
+    margin: 0;
+    font-size: 20px;
+    letter-spacing: 1px;
+    color: #00e5ff;
+    text-shadow: 0 0 8px #00e5ff, 2px 2px 0px #000;
+    font-style: italic;
+  }
+  .title-logo h2 {
+    margin: 2px 0 0;
+    font-size: 13px;
+    color: #ffca28;
+    text-shadow: 1px 1px 0 #000;
+    letter-spacing: 2px;
+  }
+
+  /* Dot Matrix / LED Displays */
+  .led-box {
+    background: #050a08;
+    border: 2px inset #263238;
+    padding: 8px;
+    border-radius: 3px;
+    margin-top: 8px;
+  }
+  .led-label {
+    font-size: 10px;
+    color: #80cbc4;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 4px;
+  }
+  .led-value {
+    font-family: "Courier New", monospace;
+    font-size: 24px;
+    font-weight: bold;
+    color: #00e676;
+    text-align: right;
+    text-shadow: 0 0 8px rgba(0, 230, 118, 0.7);
+    letter-spacing: 2px;
+  }
+  .led-sub {
+    font-family: "Courier New", monospace;
+    font-size: 13px;
+    color: #ffab00;
+    text-shadow: 0 0 6px rgba(255, 171, 0, 0.6);
+    min-height: 34px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+  }
+
+  .rank-badge {
+    background: #101729;
+    border: 1px solid #3949ab;
+    padding: 8px;
+    text-align: center;
+    border-radius: 4px;
+  }
+  .rank-title {
+    font-size: 11px;
+    color: #9fa8da;
+  }
+  .rank-name {
+    font-size: 16px;
+    font-weight: bold;
+    color: #ffee58;
+    margin-top: 3px;
+    text-shadow: 0 0 6px rgba(255, 238, 88, 0.5);
+  }
+
+  .mission-lights {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 6px;
+    margin-top: 6px;
+  }
+  .mission-pip {
+    background: #1c2536;
+    border: 1px solid #37474f;
+    padding: 5px 2px;
+    font-size: 10px;
+    text-align: center;
+    border-radius: 3px;
+    color: #607d8b;
+    transition: all 0.2s;
+  }
+  .mission-pip.active {
+    background: #d50000;
+    color: #fff;
+    border-color: #ff8a80;
+    box-shadow: 0 0 8px #ff1744;
+    font-weight: bold;
+  }
+
+  .controls-help {
+    background: #0d1326;
+    border: 1px solid #283593;
+    padding: 8px;
+    font-size: 11px;
+    line-height: 1.5;
+    color: #b0bec5;
+  }
+  .controls-help b {
+    color: #fff;
+  }
+
+  .action-buttons {
+    display: flex;
+    gap: 6px;
+  }
+  .win95-btn {
+    flex: 1;
+    padding: 6px;
+    background: #c0c0c0;
+    border-top: 2px solid #fff;
+    border-left: 2px solid #fff;
+    border-right: 2px solid #404040;
+    border-bottom: 2px solid #404040;
+    font-family: inherit;
+    font-size: 12px;
+    font-weight: bold;
+    cursor: pointer;
+    color: #000;
+  }
+  .win95-btn:active {
+    border-top: 2px solid #404040;
+    border-left: 2px solid #404040;
+    border-right: 2px solid #fff;
+    border-bottom: 2px solid #fff;
+  }
+</style>
+</head>
+<body>
+
+<div class="win-window">
+  <!-- Title Bar -->
+  <div class="win-titlebar">
+    <div class="win-titlebar-left">
+      <span class="win-icon"></span>
+      <span>3D Pinball for Windows - Space Cadet</span>
+    </div>
+    <div class="win-controls">
+      <div class="win-btn">_</div>
+      <div class="win-btn">□</div>
+      <div class="win-btn" onclick="resetGame()">×</div>
+    </div>
+  </div>
+
+  <!-- Menu Bar -->
+  <div class="win-menubar">
+    <div class="win-menu-item" onclick="resetGame()"><u>G</u>ame (F2)</div>
+    <div class="win-menu-item" onclick="toggleSound()"><u>S</u>ound: <span id="sound-label">ON</span></div>
+    <div class="win-menu-item" onclick="nudgeTable()"><u>T</u>ilt / Nudge (X)</div>
+  </div>
+
+  <!-- Main Content -->
+  <div class="game-container">
+    <canvas id="table" width="480" height="620"></canvas>
+
+    <div class="hud-panel">
+      <div>
+        <div class="title-logo">
+          <h1>3D PINBALL</h1>
+          <h2>SPACE CADET</h2>
+        </div>
+
+        <div class="led-box">
+          <div class="led-label">Score</div>
+          <div class="led-value" id="score-display">0000000</div>
+        </div>
+
+        <div class="led-box">
+          <div class="led-label">High Score</div>
+          <div class="led-value" id="highscore-display" style="color:#ff9100;">0000000</div>
+        </div>
+
+        <div class="led-box">
+          <div class="led-label">Ball In Play / Multiplier</div>
+          <div class="led-value" id="ball-display" style="font-size:18px; color:#00e5ff;">BALL 1 &nbsp; 1X</div>
+        </div>
+
+        <div class="led-box">
+          <div class="led-label">Mission Comms</div>
+          <div class="led-sub" id="comms-display">HOLD SPACE TO LAUNCH</div>
+        </div>
+      </div>
+
+      <div>
+        <div class="rank-badge">
+          <div class="rank-title">CURRENT FLEET RANK</div>
+          <div class="rank-name" id="rank-display">CADET</div>
+          <div class="mission-lights">
+            <div class="mission-pip" id="pip-0">TARGET 1</div>
+            <div class="mission-pip" id="pip-1">TARGET 2</div>
+            <div class="mission-pip" id="pip-2">TARGET 3</div>
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <div class="controls-help">
+          <div><b>Z / Left Arrow</b> : Left Flipper</div>
+          <div><b>/ or Right Arrow</b> : Right Flipper</div>
+          <div><b>Hold SPACE</b> : Plunger Launch</div>
+          <div><b>X</b> : Bump / Nudge Table</div>
+          <div><b>F2</b> : New Game</div>
+        </div>
+      </div>
+
+      <div class="action-buttons">
+        <button class="win95-btn" onclick="resetGame()">New Game (F2)</button>
+        <button class="win95-btn" onclick="toggleSound()">Mute</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const canvas = document.getElementById('table');
+const ctx = canvas.getContext('2d');
+
+// --- Web Audio Retro Synthesizer ---
+let audioCtx = null;
+let soundEnabled = true;
+
+function initAudio() {
+  if (!audioCtx) {
+    const AudioContext = window.AudioContext || window.webkitAudioContext;
+    audioCtx = new AudioContext();
+  }
+}
+
+function playTone(freq, type = 'square', duration = 0.09, slide = 0) {
+  if (!soundEnabled) return;
+  initAudio();
+  if (audioCtx.state === 'suspended') audioCtx.resume();
+
+  const osc = audioCtx.createOscillator();
+  const gain = audioCtx.createGain();
+  osc.type = type;
+  osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+  if (slide !== 0) {
+    osc.frequency.exponentialRampToValueAtTime(Math.max(40, freq + slide), audioCtx.currentTime + duration);
+  }
+
+  gain.gain.setValueAtTime(0.14, audioCtx.currentTime);
+  gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
+
+  osc.connect(gain);
+  gain.connect(audioCtx.destination);
+  osc.start();
+  osc.stop(audioCtx.currentTime + duration);
+}
+
+function toggleSound() {
+  soundEnabled = !soundEnabled;
+  document.getElementById('sound-label').textContent = soundEnabled ? 'ON' : 'OFF';
+}
+
+// --- Ranks & Game State ---
+const RANKS = [
+  "CADET",
+  "ENSIGN",
+  "LIEUTENANT",
+  "CAPTAIN",
+  "LT. COMMANDER",
+  "COMMANDER",
+  "COMMODORE",
+  "ADMIRAL",
+  "FLEET ADMIRAL"
+];
+
+let score = 0;
+let highScore = 250000;
+let currentBall = 1;
+let maxBalls = 3;
+let multiplier = 1;
+let rankIndex = 0;
+let gameOver = false;
+let plungerCharge = 0;
+let isCharging = false;
+let missionTargets = [false, false, false];
+let wormholeTimer = 0;
+let particles = [];
+
+const GRAVITY = 0.17;
+const FRICTION = 0.996;
+const SUBSTEPS = 6;
+
+const ball = {
+  x: 452,
+  y: 540,
+  vx: 0,
+  vy: 0,
+  r: 9,
+  inShooterLane: true
+};
+
+// --- Table Geometry ---
+// Attack bumpers (Classic upper cluster + mid orbitals)
+const bumpers = [
+  { x: 185, y: 155, r: 22, points: 1500, color: '#ff1744', ring: '#ff8a80', hitAnim: 0 },
+  { x: 265, y: 145, r: 22, points: 1500, color: '#ff1744', ring: '#ff8a80', hitAnim: 0 },
+  { x: 225, y: 215, r: 22, points: 1500, color: '#00e5ff', ring: '#84ffff', hitAnim: 0 },
+  { x: 120, y: 255, r: 17, points: 1000, color: '#ffea00', ring: '#ffff8d', hitAnim: 0 },
+  { x: 330, y: 255, r: 17, points: 1000, color: '#ffea00', ring: '#ffff8d', hitAnim: 0 }
+];
+
+// Hyperspace / Wormhole Kicker
+const wormhole = { x: 225, y: 92, r: 16 };
+
+// Drop Targets (Left & Right Banks)
+const targets = [
+  { x: 52, y: 210, r: 11, id: 0, hit: false },
+  { x: 42, y: 250, r: 11, id: 1, hit: false },
+  { x: 52, y: 290, r: 11, id: 2, hit: false }
+];
+
+// Static Table Walls & Guide Rails (Line Segments)
+const walls = [
+  // Shooter lane inner wall
+  { x1: 432, y1: 140, x2: 432, y2: 610, bounce: 0.6 },
+  // Outer right wall
+  { x1: 472, y1: 120, x2: 472, y2: 610, bounce: 0.6 },
+  // Plunger floor
+  { x1: 432, y1: 585, x2: 472, y2: 585, bounce: 0.3 },
+  // Top dome curve segments (approximate smooth arch)
+  { x1: 18,  y1: 140, x2: 55,  y2: 60,  bounce: 0.7 },
+  { x1: 55,  y1: 60,  x2: 145, y2: 22,  bounce: 0.7 },
+  { x1: 145, y1: 22,  x2: 335, y2: 22,  bounce: 0.7 },
+  { x1: 335, y1: 22,  x2: 425, y2: 60,  bounce: 0.7 },
+  { x1: 425, y1: 60,  x2: 472, y2: 120, bounce: 0.7 },
+  // Left outer wall
+  { x1: 18,  y1: 140, x2: 18,  y2: 455, bounce: 0.6 },
+  // Left funnel to flipper
+  { x1: 18,  y1: 455, x2: 138, y2: 538, bounce: 0.55 },
+  // Right funnel to flipper
+  { x1: 432, y1: 455, x2: 312, y2: 538, bounce: 0.55 },
+  // Left Slingshot triangle
+  { x1: 70,  y1: 395, x2: 135, y2: 485, bounce: 1.35, sling: true, points: 750 },
+  { x1: 70,  y1: 395, x2: 70,  y2: 465, bounce: 0.6 },
+  { x1: 70,  y1: 465, x2: 135, y2: 485, bounce: 0.6 },
+  // Right Slingshot triangle
+  { x1: 380, y1: 395, x2: 315, y2: 485, bounce: 1.35, sling: true, points: 750 },
+  { x1: 380, y1: 395, x2: 380, y2: 465, bounce: 0.6 },
+  { x1: 380, y1: 465, x2: 315, y2: 485, bounce: 0.6 },
+  // Upper lane dividers
+  { x1: 150, y1: 55,  x2: 150, y2: 100, bounce: 0.6 },
+  { x1: 300, y1: 55,  x2: 300, y2: 100, bounce: 0.6 }
+];
+
+// Flippers
+const flippers = [
+  {
+    side: 'left',
+    x: 138,
+    y: 538,
+    length: 74,
+    restAngle: 0.45,
+    activeAngle: -0.52,
+    angle: 0.45,
+    prevAngle: 0.45,
+    pressed: false
+  },
+  {
+    side: 'right',
+    x: 312,
+    y: 538,
+    length: 74,
+    restAngle: Math.PI - 0.45,
+    activeAngle: Math.PI + 0.52,
+    angle: Math.PI - 0.45,
+    prevAngle: Math.PI - 0.45,
+    pressed: false
+  }
+];
+
+// --- Controls ---
+window.addEventListener('keydown', (e) => {
+  if (e.code === 'KeyZ' || e.code === 'ArrowLeft') {
+    if (!flippers[0].pressed) playTone(190, 'triangle', 0.06, 90);
+    flippers[0].pressed = true;
+  }
+  if (e.code === 'Slash' || e.code === 'ArrowRight') {
+    if (!flippers[1].pressed) playTone(190, 'triangle', 0.06, 90);
+    flippers[1].pressed = true;
+  }
+  if (e.code === 'Space') {
+    e.preventDefault();
+    if (gameOver) {
+      resetGame();
+      return;
+    }
+    if (ball.inShooterLane) {
+      isCharging = true;
+    }
+  }
+  if (e.code === 'KeyX') {
+    nudgeTable();
+  }
+  if (e.code === 'F2') {
+    e.preventDefault();
+    resetGame();
+  }
+});
+
+window.addEventListener('keyup', (e) => {
+  if (e.code === 'KeyZ' || e.code === 'ArrowLeft') {
+    flippers[0].pressed = false;
+  }
+  if (e.code === 'Slash' || e.code === 'ArrowRight') {
+    flippers[1].pressed = false;
+  }
+  if (e.code === 'Space') {
+    if (isCharging && ball.inShooterLane) {
+      ball.vy = -12 - (plungerCharge * 0.24);
+      ball.vx = (Math.random() - 0.5) * 0.8;
+      isCharging = false;
+      plungerCharge = 0;
+      playTone(140, 'sawtooth', 0.22, 420);
+      setComms("CADET LAUNCHED INTO ORBIT!");
+    }
+  }
+});
+
+function setComms(msg) {
+  document.getElementById('comms-display').textContent = msg;
+}
+
+function addScore(pts) {
+  score += pts * multiplier;
+  if (score > highScore) highScore = score;
+  document.getElementById('score-display').textContent = String(score).padStart(7, '0');
+  document.getElementById('highscore-display').textContent = String(highScore).padStart(7, '0');
+}
+
+function spawnParticles(x, y, color, count = 12) {
+  for (let i = 0; i < count; i++) {
+    const a = Math.random() * Math.PI * 2;
+    const spd = 1 + Math.random() * 4;
+    particles.push({
+      x,
+      y,
+      vx: Math.cos(a) * spd,
+      vy: Math.sin(a) * spd,
+      life: 22 + Math.random() * 14,
+      color
+    });
+  }
+}
+
+function nudgeTable() {
+  if (gameOver || ball.inShooterLane) return;
+  ball.vx += (Math.random() - 0.5) * 4.5;
+  ball.vy -= 1.8;
+  playTone(90, 'sawtooth', 0.08, -20);
+  setComms("TABLE NUDGED! WATCH TILT!");
+}
+
+function resetBall() {
+  ball.x = 452;
+  ball.y = 560;
+  ball.vx = 0;
+  ball.vy = 0;
+  ball.inShooterLane = true;
+  plungerCharge = 0;
+  isCharging = false;
+  updateHUD();
+}
+
+function resetGame() {
+  score = 0;
+  currentBall = 1;
+  multiplier = 1;
+  rankIndex = 0;
+  gameOver = false;
+  missionTargets = [false, false, false];
+  targets.forEach(t => t.hit = false);
+  updateMissionPips();
+  resetBall();
+  setComms("MISSION READY. HOLD SPACE!");
+  updateHUD();
+}
+
+function updateMissionPips() {
+  for (let i = 0; i < 3; i++) {
+    const el = document.getElementById('pip-' + i);
+    if (missionTargets[i]) el.classList.add('active');
+    else el.classList.remove('active');
+  }
+}
+
+function updateHUD() {
+  document.getElementById('score-display').textContent = String(score).padStart(7, '0');
+  document.getElementById('highscore-display').textContent = String(highScore).padStart(7, '0');
+  document.getElementById('ball-display').innerHTML = gameOver
+    ? "GAME OVER"
+    : `BALL ${currentBall} &nbsp; ${multiplier}X`;
+  document.getElementById('rank-display').textContent = RANKS[rankIndex];
+}
+
+// --- Physics Engine ---
+function closestPointOnSegment(px, py, x1, y1, x2, y2) {
+  const dx = x2 - x1;
+  const dy = y2 - y1;
+  const lenSq = dx * dx + dy * dy;
+  if (lenSq === 0) return { x: x1, y: y1, t: 0 };
+  let t = ((px - x1) * dx + (py - y1) * dy) / lenSq;
+  t = Math.max(0, Math.min(1, t));
+  return { x: x1 + t * dx, y: y1 + t * dy, t };
+}
+
+function updatePhysics() {
+  if (gameOver) return;
+
+  if (isCharging && ball.inShooterLane) {
+    plungerCharge = Math.min(100, plungerCharge + 1.8);
+  }
+
+  // Handle wormhole capture hold
+  if (wormholeTimer > 0) {
+    wormholeTimer--;
+    ball.x = wormhole.x;
+    ball.y = wormhole.y;
+    ball.vx = 0;
+    ball.vy = 0;
+    if (wormholeTimer === 0) {
+      const ejectAngle = (Math.PI * 0.35) + Math.random() * (Math.PI * 0.3);
+      ball.vx = Math.cos(ejectAngle) * 11;
+      ball.vy = Math.sin(ejectAngle) * 11;
+      playTone(520, 'sawtooth', 0.28, 600);
+      spawnParticles(wormhole.x, wormhole.y, '#00e5ff', 25);
+      setComms("HYPERSPACE JUMP COMPLETE!");
+    }
+    return;
+  }
+
+  // Update Flippers
+  flippers.forEach(f => {
+    f.prevAngle = f.angle;
+    const target = f.pressed ? f.activeAngle : f.restAngle;
+    f.angle += (target - f.angle) * 0.38;
+  });
+
+  // Sub-stepped Ball Movement
+  for (let step = 0; step < SUBSTEPS; step++) {
+    ball.vy += GRAVITY / SUBSTEPS;
+    ball.vx *= Math.pow(FRICTION, 1 / SUBSTEPS);
+    ball.vy *= Math.pow(FRICTION, 1 / SUBSTEPS);
+
+    ball.x += ball.vx / SUBSTEPS;
+    ball.y += ball.vy / SUBSTEPS;
+
+    // Once ball clears the shooter lane top, lock shooter lane door
+    if (ball.inShooterLane && ball.x < 422 && ball.y < 140) {
+      ball.inShooterLane = false;
+    }
+
+    // One-way gate preventing re-entry into shooter lane
+    if (!ball.inShooterLane && ball.x + ball.r > 432 && ball.y < 150) {
+      ball.x = 432 - ball.r;
+      ball.vx = -Math.abs(ball.vx) * 0.7;
+    }
+
+    // Wall Collisions
+    walls.forEach(w => {
+      const cp = closestPointOnSegment(ball.x, ball.y, w.x1, w.y1, w.x2, w.y2);
+      const dx = ball.x - cp.x;
+      const dy = ball.y - cp.y;
+      const dist = Math.hypot(dx, dy);
+
+      if (dist < ball.r && dist > 0.0001) {
+        const nx = dx / dist;
+        const ny = dy / dist;
+        // Push out
+        ball.x = cp.x + nx * ball.r;
+        ball.y = cp.y + ny * ball.r;
+
+        const dot = ball.vx * nx + ball.vy * ny;
+        if (dot < 0) {
+          ball.vx -= (1 + w.bounce) * dot * nx;
+          ball.vy -= (1 + w.bounce) * dot * ny;
+
+          if (w.sling) {
+            addScore(w.points);
+            playTone(340, 'square', 0.08, 180);
+            spawnParticles(cp.x, cp.y, '#ffea00', 10);
+            setComms("SLINGSHOT BOOST +750");
+          }
+        }
+      }
+    });
+
+    // Flipper Collisions
+    flippers.forEach(f => {
+      const tipX = f.x + Math.cos(f.angle) * f.length;
+      const tipY = f.y + Math.sin(f.angle) * f.length;
+      const cp = closestPointOnSegment(ball.x, ball.y, f.x, f.y, tipX, tipY);
+      const dx = ball.x - cp.x;
+      const dy = ball.y - cp.y;
+      const dist = Math.hypot(dx, dy);
+      const thickness = 7;
+
+      if (dist < ball.r + thickness && dist > 0.0001) {
+        const nx = dx / dist;
+        const ny = dy / dist;
+        ball.x = cp.x + nx * (ball.r + thickness);
+        ball.y = cp.y + ny * (ball.r + thickness);
+
+        const angVel = (f.angle - f.prevAngle);
+        const leverArm = cp.t * f.length;
+        const flipperBoost = Math.abs(angVel) * leverArm * 1.95;
+
+        const dot = ball.vx * nx + ball.vy * ny;
+        if (dot < 0) {
+          ball.vx -= 1.65 * dot * nx;
+          ball.vy -= 1.65 * dot * ny;
+        }
+
+        if (flipperBoost > 0.25) {
+          ball.vx += nx * flipperBoost + (Math.random() - 0.5) * 0.8;
+          ball.vy -= Math.abs(ny) * flipperBoost * 1.35 + 2.5;
+        }
+      }
+    });
+
+    // Bumper Collisions
+    bumpers.forEach(b => {
+      const dx = ball.x - b.x;
+      const dy = ball.y - b.y;
+      const dist = Math.hypot(dx, dy);
+      if (dist < ball.r + b.r && dist > 0.0001) {
+        const nx = dx / dist;
+        const ny = dy / dist;
+        ball.x = b.x + nx * (ball.r + b.r);
+        ball.y = b.y + ny * (ball.r + b.r);
+
+        const speed = Math.max(7.5, Math.hypot(ball.vx, ball.vy) * 1.15);
+        ball.vx = nx * speed;
+        ball.vy = ny * speed;
+        b.hitAnim = 10;
+
+        addScore(b.points);
+        playTone(580, 'square', 0.09, 260);
+        spawnParticles(b.x + nx * b.r, b.y + ny * b.r, b.color, 14);
+        setComms(`ATTACK BUMPER HIT! +${b.points * multiplier}`);
+      }
+    });
+
+    // Mission Targets
+    targets.forEach(t => {
+      const dx = ball.x - t.x;
+      const dy = ball.y - t.y;
+      const dist = Math.hypot(dx, dy);
+      if (dist < ball.r + t.r) {
+        const nx = dx / dist;
+        const ny = dy / dist;
+        ball.vx = Math.abs(ball.vx) * 0.9 + 3;
+        ball.x = t.x + nx * (ball.r + t.r + 2);
+
+        if (!missionTargets[t.id]) {
+          missionTargets[t.id] = true;
+          updateMissionPips();
+          addScore(3000);
+          playTone(720, 'triangle', 0.12, 300);
+          spawnParticles(t.x, t.y, '#00e676', 15);
+          setComms(`MISSION TARGET ${t.id + 1} LOCKED!`);
+
+          if (missionTargets.every(Boolean)) {
+            multiplier = Math.min(5, multiplier + 1);
+            addScore(15000);
+            setComms(`ALL TARGETS! MULTIPLIER ${multiplier}X!`);
+            playTone(880, 'sawtooth', 0.3, 400);
+            setTimeout(() => {
+              missionTargets = [false, false, false];
+              updateMissionPips();
+            }, 900);
+          }
+          updateHUD();
+        } else {
+          addScore(500);
+        }
+      }
+    });
+
+    // Wormhole Capture
+    const wDist = Math.hypot(ball.x - wormhole.x, ball.y - wormhole.y);
+    if (wDist < wormhole.r) {
+      wormholeTimer = 42;
+      addScore(25000);
+      if (rankIndex < RANKS.length - 1) {
+        rankIndex++;
+      }
+      updateHUD();
+      playTone(300, 'sine', 0.35, 700);
+      setComms(`PROMOTED TO ${RANKS[rankIndex]}! +25,000`);
+      break;
+    }
+  }
+
+  // Drain Check
+  if (ball.y > canvas.height + 25) {
+    playTone(140, 'sawtooth', 0.4, -90);
+    if (currentBall < maxBalls) {
+      currentBall++;
+      multiplier = 1;
+      setComms(`BALL LOST! PREPARE BALL ${currentBall}`);
+      resetBall();
+    } else {
+      gameOver = true;
+      updateHUD();
+      setComms("GAME OVER! PRESS F2 OR SPACE");
+    }
+  }
+
+  // Decay animations & particles
+  bumpers.forEach(b => {
+    if (b.hitAnim > 0) b.hitAnim--;
+  });
+
+  for (let i = particles.length - 1; i >= 0; i--) {
+    const p = particles[i];
+    p.x += p.vx;
+    p.y += p.vy;
+    p.life--;
+    if (p.life <= 0) particles.splice(i, 1);
+  }
+}
+
+// --- Rendering ---
+function drawTable() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  // Decorative Starfield & Space Cadet Center Emblem
+  ctx.save();
+  ctx.strokeStyle = 'rgba(0, 229, 255, 0.14)';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.arc(225, 330, 82, 0, Math.PI * 2);
+  ctx.stroke();
+
+  ctx.beginPath();
+  ctx.arc(225, 330, 52, 0, Math.PI * 2);
+  ctx.stroke();
+
+  ctx.fillStyle = 'rgba(255, 255, 255, 0.08)';
+  ctx.font = 'bold 15px Tahoma';
+  ctx.textAlign = 'center';
+  ctx.fillText('SPACE CADET', 225, 326);
+  ctx.font = '11px Tahoma';
+  ctx.fillText('HYPERSPACE MISSION', 225, 344);
+  ctx.restore();
+
+  // Draw Wormhole / Hyperspace Well
+  ctx.save();
+  const pulse = Math.sin(Date.now() * 0.008) * 3;
+  const grad = ctx.createRadialGradient(wormhole.x, wormhole.y, 2, wormhole.x, wormhole.y, wormhole.r + 8 + pulse);
+  grad.addColorStop(0, '#ffffff');
+  grad.addColorStop(0.4, '#00e5ff');
+  grad.addColorStop(1, 'rgba(124, 77, 255, 0)');
+  ctx.fillStyle = grad;
+  ctx.beginPath();
+  ctx.arc(wormhole.x, wormhole.y, wormhole.r + 8 + pulse, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.restore();
+
+  // Draw Mission Drop Targets
+  targets.forEach(t => {
+    ctx.save();
+    ctx.beginPath();
+    ctx.arc(t.x, t.y, t.r, 0, Math.PI * 2);
+    ctx.fillStyle = missionTargets[t.id] ? '#00e676' : '#37474f';
+    ctx.shadowColor = missionTargets[t.id] ? '#00e676' : 'transparent';
+    ctx.shadowBlur = missionTargets[t.id] ? 12 : 0;
+    ctx.fill();
+    ctx.lineWidth = 2;
+    ctx.strokeStyle = '#cfd8dc';
+    ctx.stroke();
+    ctx.restore();
+  });
+
+  // Draw Walls & Rails
+  ctx.save();
+  walls.forEach(w => {
+    ctx.beginPath();
+    ctx.moveTo(w.x1, w.y1);
+    ctx.lineTo(w.x2, w.y2);
+    ctx.lineWidth = w.sling ? 4 : 3;
+    ctx.strokeStyle = w.sling ? '#ffea00' : '#5c6bc0';
+    ctx.shadowColor = w.sling ? '#ffea00' : '#3949ab';
+    ctx.shadowBlur = w.sling ? 8 : 4;
+    ctx.stroke();
+  });
+  ctx.restore();
+
+  // Draw Attack Bumpers
+  bumpers.forEach(b => {
+    ctx.save();
+    const r = b.r + (b.hitAnim > 0 ? 4 : 0);
+    ctx.beginPath();
+    ctx.arc(b.x, b.y, r, 0, Math.PI * 2);
+    ctx.fillStyle = b.hitAnim > 0 ? '#ffffff' : b.color;
+    ctx.shadowColor = b.color;
+    ctx.shadowBlur = b.hitAnim > 0 ? 22 : 10;
+    ctx.fill();
+
+    ctx.lineWidth = 3;
+    ctx.strokeStyle = b.ring;
+    ctx.stroke();
+
+    ctx.beginPath();
+    ctx.arc(b.x, b.y, r * 0.48, 0, Math.PI * 2);
+    ctx.fillStyle = '#0d1224';
+    ctx.fill();
+    ctx.restore();
+  });
+
+  // Draw Flippers
+  flippers.forEach(f => {
+    const tipX = f.x + Math.cos(f.angle) * f.length;
+    const tipY = f.y + Math.sin(f.angle) * f.length;
+
+    ctx.save();
+    ctx.lineCap = 'round';
+    ctx.lineWidth = 14;
+    ctx.strokeStyle = '#ff9100';
+    ctx.shadowColor = '#ff6d00';
+    ctx.shadowBlur = 8;
+    ctx.beginPath();
+    ctx.moveTo(f.x, f.y);
+    ctx.lineTo(tipX, tipY);
+    ctx.stroke();
+
+    // Pivot bolt
+    ctx.fillStyle = '#ffffff';
+    ctx.beginPath();
+    ctx.arc(f.x, f.y, 4, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+  });
+
+  // Draw Plunger Spring
+  ctx.save();
+  const compress = plungerCharge * 0.32;
+  ctx.fillStyle = '#b0bec5';
+  ctx.fillRect(444, 585, 16, 28);
+  ctx.fillStyle = '#ff5252';
+  ctx.fillRect(442, 578 + compress * 0.2, 20, 9);
+  ctx.restore();
+
+  // Draw Particles
+  particles.forEach(p => {
+    ctx.save();
+    ctx.fillStyle = p.color;
+    ctx.globalAlpha = Math.max(0, p.life / 30);
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, 2.5, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+  });
+
+  // Draw Chrome Steel Pinball
+  if (wormholeTimer === 0) {
+    ctx.save();
+    const ballGrad = ctx.createRadialGradient(
+      ball.x - 3, ball.y - 3, 1,
+      ball.x, ball.y, ball.r
+    );
+    ballGrad.addColorStop(0, '#ffffff');
+    ballGrad.addColorStop(0.55, '#cfd8dc');
+    ballGrad.addColorStop(1, '#455a64');
+
+    ctx.fillStyle = ballGrad;
+    ctx.shadowColor = 'rgba(0,0,0,0.75)';
+    ctx.shadowBlur = 6;
+    ctx.beginPath();
+    ctx.arc(ball.x, ball.y, ball.r, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+  }
+}
+
+function loop() {
+  updatePhysics();
+  drawTable();
+  requestAnimationFrame(loop);
+}
+
+updateHUD();
+requestAnimationFrame(loop);
+</script>
+</body>
+</html>
